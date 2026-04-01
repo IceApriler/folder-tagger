@@ -50,6 +50,47 @@
 * `.vscode-test`
 * `target`
 
+## 💻 开发与调试
+
+1. **安装依赖**：克隆代码后，在终端执行 `npm install`。
+2. **启动调试**：在 VS Code 中打开项目根目录，按下 `F5` 键即可启动“扩展开发宿主” (Extension Development Host)，新窗口里就会加载当前开发的扩展，可以直接进行测试。
+3. **实时编译**：默认按 `F5` 会自动编译，或者你可以在终端执行 `npm run watch` 进行 TypeScript 的热更编译捕获。
+
+## 📦 打包扩展 (.vsix)
+
+插件的打包依赖微软官方提供的 `@vscode/vsce` 工具。如果您希望将扩展打包为文件离线分享给他人：
+
+1. **安装 vsce 工具**：推荐全局安装 `npm install -g @vscode/vsce` (或使用 `npx @vscode/vsce`)。
+2. **执行打包指令**：在项目根目录下运行以下命令：
+   ```bash
+   vsce package
+   # 或者
+   npx @vscode/vsce package
+   ```
+3. **获取产物**：命令执行完毕后，项目当前目录下会生成一个如 `folder-tagger-0.0.1.vsix` 的文件，这就是此插件的安装包。
+
+## 📥 安装扩展 (.vsix)
+
+如果您获得了打包好的 `.vsix` 文件，请按以下步骤在 VS Code 中安装：
+1. 打开 VS Code 的 **扩展 (Extensions)** 侧边栏面板。
+2. 点击面板右上角的 **`...` (更多操作)** 图标。
+3. 选择 **“从 VSIX 安装...” (Install from VSIX...)**。
+4. 在弹出的文件选择器中选中得到的 `.vsix` 文件进行安装，安装完成后按提示重新加载窗口即可。
+
+## 🚀 发布扩展市场 (Marketplace)
+
+如果您希望正式上架到 VS Code 插件市场，需创建 Publisher 账号：
+1. 在 [Azure DevOps](https://dev.azure.com/) 获取 Personal Access Token (PAT)。
+2. 确保在 `package.json` 中配置好了正确的 publisher 参数。
+3. （可选）使用 `vsce login <publisher-name>` 将 PAT 令牌绑定到本地。
+4. 确保更新 `package.json` 中的版本号，然后执行发布：
+   ```bash
+   vsce publish
+   # 或者
+   npx @vscode/vsce publish
+   ```
+发布成功后，全球的开发者即可直接在 VS Code 市场搜索 `Folder Tagger` 进行下载。
+
 ---
 
 *Enjoy high-efficiency code project organization with Folder Tagger.*
