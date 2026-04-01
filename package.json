@@ -1,0 +1,109 @@
+{
+  "name": "folder-tagger",
+  "displayName": "Folder Tagger",
+  "description": "Custom Tree Explorer with Tag Support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "folder-tagger-explorer",
+          "title": "Folder Tagger",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "folder-tagger-explorer": [
+        {
+          "id": "folder-tagger-view",
+          "name": "Workspace Explorer",
+          "icon": "$(list-tree)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "folder-tagger.refreshEntry",
+        "title": "刷新视图",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "folder-tagger.addTag",
+        "title": "Add Tag",
+        "icon": "$(add)"
+      },
+      {
+        "command": "folder-tagger.removeTag",
+        "title": "Remove Tag...",
+        "icon": "$(close)"
+      },
+      {
+        "command": "folder-tagger.deleteItem",
+        "title": "Delete"
+      },
+      {
+        "command": "folder-tagger.renameItem",
+        "title": "Rename"
+      },
+      {
+        "command": "folder-tagger.openTerminal",
+        "title": "Open in Terminal"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "folder-tagger.refreshEntry",
+          "when": "view == folder-tagger-view",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "folder-tagger.addTag",
+          "when": "view == folder-tagger-view",
+          "group": "inline"
+        },
+        {
+          "command": "folder-tagger.removeTag",
+          "when": "view == folder-tagger-view",
+          "group": "2_workspace@1"
+        },
+        {
+          "command": "folder-tagger.deleteItem",
+          "when": "view == folder-tagger-view",
+          "group": "3_modification@1"
+        },
+        {
+          "command": "folder-tagger.renameItem",
+          "when": "view == folder-tagger-view",
+          "group": "3_modification@2"
+        },
+        {
+          "command": "folder-tagger.openTerminal",
+          "when": "view == folder-tagger-view && viewItem == folder",
+          "group": "5_terminal@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.1.3"
+  }
+}
