@@ -1,18 +1,34 @@
 {
   "name": "folder-tagger",
+  "publisher": "IceApriler",
   "displayName": "%folder-tagger.displayName%",
   "description": "%folder-tagger.description%",
   "version": "1.0.0",
-  "engines": {
-    "vscode": "^1.80.0"
-  },
+  "icon": "media/icon.png",
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:folder-tagger-view",
-    "onView:folder-tagger-summary-view"
+  "keywords": [
+    "vscode",
+    "extension",
+    "tags",
+    "folders",
+    "explorer",
+    "organization",
+    "productivity"
   ],
+  "license": "MIT",
+  "homepage": "https://github.com/IceApriler/folder-tagger#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IceApriler/folder-tagger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IceApriler/folder-tagger/issues"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
   "main": "./out/extension.js",
   "contributes": {
     "views": {

@@ -1,0 +1,13 @@
+.gitignore
+.vscode/**
+! .vscode/folder-tagger-tags.json
+src/**
+out/test/**
+tsconfig.json
+package-lock.json
+*.vsix
+media/banners/**
+.git/**
+node_modules/**
+README_EN.md
+# 只有 out/ 下的 JS 文件、media/、package.json 和 README.md 需要打包
