@@ -9,7 +9,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:folder-tagger-view",
+    "onView:folder-tagger-summary-view"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
@@ -46,6 +49,21 @@
         "command": "folder-tagger.revealInTagTree",
         "title": "%commands.revealInTagTree%",
         "icon": "$(list-tree)"
+      },
+      {
+        "command": "folder-tagger.revealInTagTree",
+        "title": "%commands.revealInTagTree%",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "folder-tagger.hideUntagged",
+        "title": "%commands.hideUntagged%",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "folder-tagger.showUntagged",
+        "title": "%commands.showUntagged%",
+        "icon": "$(eye-closed)"
       }
     ],
     "menus": {
@@ -53,7 +71,19 @@
         {
           "command": "folder-tagger.refreshEntry",
           "when": "view == folder-tagger-view || view == folder-tagger-summary-view",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "folder-tagger.hideUntagged",
+          "when": "view == folder-tagger-view && !folderTagger.hideUntagged",
+          "group": "navigation@2",
+          "icon": "$(eye)"
+        },
+        {
+          "command": "folder-tagger.showUntagged",
+          "when": "view == folder-tagger-view && folderTagger.hideUntagged",
+          "group": "navigation@2",
+          "icon": "$(eye-closed)"
         }
       ],
       "explorer/context": [

@@ -59,14 +59,31 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // 性能优化：防抖计时器，避免在原生树中快速导航时产生密集的 reveal 请求
     let revealTimer: NodeJS.Timeout | undefined;
+
+    // ============================================
+    // 5. 状态管理与显示设置
+    // ============================================
+    // 初始化配置状态：从 workspaceState (持久化) 中读取
+    let isHideUntagged = context.workspaceState.get<boolean>('hideUntagged', false);
+
+    // 同步初始状态给 Provider
+    fileTreeProvider.isHideUntagged = isHideUntagged;
+
+    // 同步 Context Key 以支持 package.json 中的菜单图标条件切换
+    const updateContextKeys = () => {
+        console.log(`[FolderTagger] Updating context: hideUntagged = ${isHideUntagged}`);
+        vscode.commands.executeCommand('setContext', 'folderTagger.hideUntagged', isHideUntagged);
+    };
+    updateContextKeys();
     
-    // 0-Click Auto Sync: 追踪当前活动的文本编辑器在我们的各个视图中定位
-    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async editor => {
+    // 辅助函数：统一处理同步定位逻辑
+    const syncActiveEditor = (editor: vscode.TextEditor | undefined, source: string = 'unknown') => {
         if (!editor || !editor.document || editor.document.uri.scheme !== 'file') {
             return;
         }
 
         const fsPath = editor.document.uri.fsPath;
+        console.log(`[FolderTagger] Syncing editor (${source}): ${path.basename(fsPath)}`);
         
         // 清理旧的定时器
         if (revealTimer) {
@@ -91,31 +108,57 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
             }
 
-            // 2. 同步到 Workspace Explorer (Tags) 面板 (仅当视图可见时)
-            if (treeView.visible) {
-                try {
-                    if (rootPath && fsPath.startsWith(rootPath)) {
-                        const tagList = tagService.getTagsForFsPath(fsPath);
-                        const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
-                        
-                        const fileItem = new FileItem(
-                            editor.document.uri,
-                            path.basename(fsPath),
-                            false, // isDirectory
-                            vscode.TreeItemCollapsibleState.None,
-                            desc,
-                            'file'
-                        );
-                        
-                        // reveal 会根据 getParent 自动展开层级定位，强制选择并获取焦点
-                        await treeView.reveal(fileItem, { select: true, focus: true, expand: true });
-                    }
-                } catch (e) {
-                    console.error('Auto-reveal in Tree failed', e);
+            // 2. 同步到 Workspace Explorer (Tags) 面板
+            // 注意：我们移除 .visible 检查，让 reveal 更激进地预加载路径
+            try {
+                if (rootPath && fsPath.startsWith(rootPath)) {
+                    const tagList = tagService.getTagsForFsPath(fsPath);
+                    const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
+                    
+                    const fileItem = new FileItem(
+                        editor.document.uri,
+                        path.basename(fsPath),
+                        false, // isDirectory
+                        vscode.TreeItemCollapsibleState.None,
+                        desc,
+                        'file'
+                    );
+                    
+                    // reveal 会根据 getParent 自动展开层级定位
+                    // 即使 view 不可见，reveal 也有助于 VSCode 建立节点缓存
+                    await treeView.reveal(fileItem, { select: true, focus: false, expand: true });
+                    console.log(`[FolderTagger] Reveal triggered for: ${path.basename(fsPath)}`);
                 }
+            } catch (e) {
+                console.error('Auto-reveal in Tree failed', e);
             }
         }, 100);
+    };
+
+    // 0-Click Auto Sync: 追踪当前活动的文本编辑器在我们的各个视图中定位
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        syncActiveEditor(editor, 'EditorChanged');
     }));
+
+    // 视图可见性监听：当用户展开或点击进入视图时，立即同步当前选中的文件
+    context.subscriptions.push(treeView.onDidChangeVisibility(e => {
+        if (e.visible) {
+            syncActiveEditor(vscode.window.activeTextEditor, 'TreeViewVisible');
+        }
+    }));
+    context.subscriptions.push(summaryTreeView.onDidChangeVisibility(e => {
+        if (e.visible) {
+            syncActiveEditor(vscode.window.activeTextEditor, 'SummaryVisible');
+        }
+    }));
+
+    // 【策略：双重载入】确保重启窗口后，即使 VSCode 启动由于各种原因变慢，也能成功定位一次
+    // 1. 立即执行一次
+    syncActiveEditor(vscode.window.activeTextEditor, 'InitImmediate');
+    // 2. 1秒后补偿执行一次（应对 VSCode 树视图初始化时延）
+    setTimeout(() => {
+        syncActiveEditor(vscode.window.activeTextEditor, 'InitDelayed');
+    }, 1000);
 
     // ============================================
     // 5. 国际化与动作指令分发中心
@@ -124,13 +167,13 @@ export async function activate(context: vscode.ExtensionContext) {
     // 简易国际化辅助函数
     const translations: Record<string, Record<string, string>> = {
         'en': {
-            'inputBox.prompt.modifyTags': 'Edit tags for this resource (separate with commas)',
-            'inputBox.placeHolder.modifyTags': 'e.g. Core, Feature, UI',
+            'inputBox.prompt.modifyTags': 'Edit tags for this resource (separate with commas, semicolons or spaces)',
+            'inputBox.placeHolder.modifyTags': 'e.g. Core, Feature; UI Legacy',
             'msg.noValidObject': 'No valid file or folder selected.'
         },
         'zh-cn': {
-            'inputBox.prompt.modifyTags': '修改当前资源的标签（多个项请用逗号分隔）',
-            'inputBox.placeHolder.modifyTags': '如: 核心, 待办, UI',
+            'inputBox.prompt.modifyTags': '修改当前资源的标签（可以用逗号、分号或空格分隔）',
+            'inputBox.placeHolder.modifyTags': '如: 核心, 待办; UI 关键',
             'msg.noValidObject': '未选中有效的资源对象。'
         }
     };
@@ -145,6 +188,24 @@ export async function activate(context: vscode.ExtensionContext) {
         await tagService.reloadFromFile();
         fileTreeProvider.refresh();
         tagSummaryProvider.refresh();
+    }));
+
+    // 指令 A：隐藏未标记项
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.hideUntagged', () => {
+        isHideUntagged = true;
+        context.workspaceState.update('hideUntagged', true);
+        fileTreeProvider.isHideUntagged = true;
+        fileTreeProvider.refresh();
+        updateContextKeys();
+    }));
+
+    // 指令 B：显示所有项
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.showUntagged', () => {
+        isHideUntagged = false;
+        context.workspaceState.update('hideUntagged', false);
+        fileTreeProvider.isHideUntagged = false;
+        fileTreeProvider.refresh();
+        updateContextKeys();
     }));
 
     // 【核心能力】修改标签：集新增、删除、排序为一体的单点入口

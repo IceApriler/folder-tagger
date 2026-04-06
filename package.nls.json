@@ -7,6 +7,8 @@
     "commands.modifyTags": "Modify Tags",
     "commands.revealInNative": "Reveal in Native Explorer",
     "commands.revealInTagTree": "Reveal in Tag Tree",
+    "commands.hideUntagged": "Hide Untagged Items",
+    "commands.showUntagged": "Show Untagged Items",
     "inputBox.prompt.modifyTags": "Edit tags for this resource (separate with commas, semicolons or spaces)",
     "inputBox.placeHolder.modifyTags": "e.g. Core, Feature; UI Legacy",
     "msg.noValidObject": "No valid file or folder selected."

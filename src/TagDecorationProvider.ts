@@ -5,6 +5,9 @@ export class TagDecorationProvider implements vscode.FileDecorationProvider {
     private _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
     readonly onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> = this._onDidChangeFileDecorations.event;
 
+    // 状态位：是否显示具体的标签数量
+    public showBadgeCount: boolean = false;
+
     constructor(private tagService: TagService, private context: vscode.ExtensionContext) {
         // 监听来自后台字典的更新号角
         this.context.subscriptions.push(
@@ -29,11 +32,18 @@ export class TagDecorationProvider implements vscode.FileDecorationProvider {
         // 当查询到此实体资源确实包含被赋予的 Tag 集合后，开启特效
         if (tags && tags.length > 0) {
             return {
-                badge: 'T', // 在默认图标右侧挤入一个小巧的 T 微标
+                badge: 'T', // 固定显示经典的“T”微标
                 color: new vscode.ThemeColor('charts.blue'), // 改写它在树图界面中的排版字体为深邃蓝
-                tooltip: `已挂载的 Tag: ${tags.join(', ')}` // 当鼠标经过时悬浮呈现的详情文本
+                tooltip: `已挂载的 ${tags.length} 个 Tag: ${tags.join(', ')}` // 当鼠标经过时悬浮呈现的详情文本
             };
         }
         return undefined; // 不是我们的菜，原物返回即可
+    }
+
+    /**
+     * 手动触发徽标刷新
+     */
+    public refresh(): void {
+        this._onDidChangeFileDecorations.fire(undefined);
     }
 }

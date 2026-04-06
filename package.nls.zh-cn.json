@@ -7,6 +7,8 @@
     "commands.modifyTags": "修改标签",
     "commands.revealInNative": "在资源管理器中显示",
     "commands.revealInTagTree": "在标签树中显示",
+    "commands.hideUntagged": "隐藏未标记项",
+    "commands.showUntagged": "显示所有项",
     "inputBox.prompt.modifyTags": "修改当前资源的标签（可以用逗号、分号或空格分隔）",
     "inputBox.placeHolder.modifyTags": "如: 核心, 待办; UI 关键",
     "msg.noValidObject": "未选中有效的资源对象。"

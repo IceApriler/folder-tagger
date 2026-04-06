@@ -217,4 +217,23 @@ export class TagService {
             console.error('无法成功写入 tags.json 文件', error);
         }
     }
+
+    /**
+     * 判断某个文件夹及其子孙项是否包含任何 Tag
+     */
+    public hasTaggedDescendant(folderFsPath: string): boolean {
+        const folderKey = this.normalize(folderFsPath);
+        if (!folderKey) {
+            // 如果是根目录，检查整个 Map 是否有数据即可
+            return this.tagsMap.size > 0;
+        }
+
+        const folderPrefix = folderKey + '/';
+        for (const key of this.tagsMap.keys()) {
+            if (key === folderKey || key.startsWith(folderPrefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

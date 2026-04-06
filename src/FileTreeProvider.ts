@@ -10,6 +10,9 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<FileItem | undefined | void> = new vscode.EventEmitter<FileItem | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | void> = this._onDidChangeTreeData.event;
 
+    // 状态位：是否隐藏未标记的项目
+    public isHideUntagged: boolean = false;
+
     constructor(
         private workspaceRoot: string | undefined,
         private tagService: TagService
@@ -85,6 +88,24 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
                 if (type === vscode.FileType.Directory && BLACKLISTED_DIRS.has(name)) {
                     return false;
                 }
+                
+                // 3. 性能优化：根据“隐藏未标记项”开关进行过滤
+                if (this.isHideUntagged) {
+                    const fullPath = path.join(currentPath, name);
+                    if (type === vscode.FileType.Directory) {
+                        // 文件夹：只有当文件夹本身有标，或者其子孙项有标时才显示
+                        if (!this.tagService.hasTaggedDescendant(fullPath)) {
+                            return false;
+                        }
+                    } else {
+                        // 文件：只有当文件本身有标时才显示
+                        const tags = this.tagService.getTagsForFsPath(fullPath);
+                        if (!tags || tags.length === 0) {
+                            return false;
+                        }
+                    }
+                }
+
                 return true;
             });
 
