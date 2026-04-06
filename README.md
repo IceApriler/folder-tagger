@@ -10,7 +10,7 @@
 
 ### 1. 双视图管理系统
 
-![Dual View Management](media/screenshots/dual-view.png)
+<img src="media/screenshots/dual-view.png" width="600" alt="Dual View Management" />
 
 - **标签树视图**：以树状结构展示工作区文件，实时同步标签显示，支持过滤未标记项，专注于关键资源。
 - **标签汇总视图**：按标签名称聚合资源，点击标签可展开并跳转至对应文件，便于跨模块快速切换。
