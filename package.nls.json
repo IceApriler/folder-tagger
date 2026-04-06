@@ -1,0 +1,13 @@
+{
+    "folder-tagger.displayName": "Folder Tagger",
+    "folder-tagger.description": "Custom Tree Explorer with Tag Support",
+    "views.explorer.tagger-view.name": "Workspace Explorer (Tag Tree)",
+    "views.explorer.summary-view.name": "Tag Summary",
+    "commands.refreshEntry": "Refresh View",
+    "commands.modifyTags": "Modify Tags",
+    "commands.revealInNative": "Reveal in Native Explorer",
+    "commands.revealInTagTree": "Reveal in Tag Tree",
+    "inputBox.prompt.modifyTags": "Edit tags for this resource (separate with commas, semicolons or spaces)",
+    "inputBox.placeHolder.modifyTags": "e.g. Core, Feature; UI Legacy",
+    "msg.noValidObject": "No valid file or folder selected."
+}

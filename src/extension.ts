@@ -4,6 +4,7 @@ import { FileTreeProvider, FileItem } from './FileTreeProvider';
 import { TagService } from './TagService';
 import { TagSyncManager } from './TagSyncManager';
 import { TagDecorationProvider } from './TagDecorationProvider';
+import { TagSummaryProvider, FileNode, TagNode } from './TagSummaryProvider';
 
 export async function activate(context: vscode.ExtensionContext) {
     const rootPath =
@@ -33,9 +34,19 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(treeView);
 
+    const tagSummaryProvider = new TagSummaryProvider(tagService);
+    const summaryTreeView = vscode.window.createTreeView('folder-tagger-summary-view', {
+        treeDataProvider: tagSummaryProvider,
+        showCollapseAll: true
+    });
+    context.subscriptions.push(summaryTreeView);
+
     // 每当外界或内在有新 Tag 变动的时候，系统必须自刷新
     context.subscriptions.push(
-        tagService.onDidTagsChange(() => fileTreeProvider.refresh())
+        tagService.onDidTagsChange(() => {
+            fileTreeProvider.refresh();
+            tagSummaryProvider.refresh();
+        })
     );
 
     // ============================================
@@ -46,74 +57,156 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.registerFileDecorationProvider(tagDecorationProvider)
     );
 
+    // 性能优化：防抖计时器，避免在原生树中快速导航时产生密集的 reveal 请求
+    let revealTimer: NodeJS.Timeout | undefined;
+    
+    // 0-Click Auto Sync: 追踪当前活动的文本编辑器在我们的各个视图中定位
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async editor => {
+        if (!editor || !editor.document || editor.document.uri.scheme !== 'file') {
+            return;
+        }
+
+        const fsPath = editor.document.uri.fsPath;
+        
+        // 清理旧的定时器
+        if (revealTimer) {
+            clearTimeout(revealTimer);
+        }
+
+        // 延迟 100ms 执行，确保用户停下操作后再同步，大幅降低卡顿感
+        revealTimer = setTimeout(async () => {
+            // 1. 同步到 Tag Summary (仅当视图可见时)
+            if (summaryTreeView.visible) {
+                const tags = tagService.getTagsForFsPath(fsPath);
+                if (tags && tags.length > 0) {
+                    try {
+                        const targetTag = tags[0]; 
+                        const summaryNode = tagSummaryProvider.findNodeByPath(targetTag, fsPath);
+                        if (summaryNode) {
+                            await summaryTreeView.reveal(summaryNode, { select: true, focus: false, expand: true });
+                        }
+                    } catch (e) {
+                        console.error('Auto-reveal in Summary failed', e);
+                    }
+                }
+            }
+
+            // 2. 同步到 Workspace Explorer (Tags) 面板 (仅当视图可见时)
+            if (treeView.visible) {
+                try {
+                    if (rootPath && fsPath.startsWith(rootPath)) {
+                        const tagList = tagService.getTagsForFsPath(fsPath);
+                        const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
+                        
+                        const fileItem = new FileItem(
+                            editor.document.uri,
+                            path.basename(fsPath),
+                            false, // isDirectory
+                            vscode.TreeItemCollapsibleState.None,
+                            desc,
+                            'file'
+                        );
+                        
+                        // reveal 会根据 getParent 自动展开层级定位，强制选择并获取焦点
+                        await treeView.reveal(fileItem, { select: true, focus: true, expand: true });
+                    }
+                } catch (e) {
+                    console.error('Auto-reveal in Tree failed', e);
+                }
+            }
+        }, 100);
+    }));
+
     // ============================================
-    // 5. 将各种暴露向外用于点击使用的动作能力分发给各个系统级上下文按键栏
+    // 5. 国际化与动作指令分发中心
     // ============================================
     
-    // 给系统留一个刷新动作点
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.refreshEntry', () => {
+    // 简易国际化辅助函数
+    const translations: Record<string, Record<string, string>> = {
+        'en': {
+            'inputBox.prompt.modifyTags': 'Edit tags for this resource (separate with commas)',
+            'inputBox.placeHolder.modifyTags': 'e.g. Core, Feature, UI',
+            'msg.noValidObject': 'No valid file or folder selected.'
+        },
+        'zh-cn': {
+            'inputBox.prompt.modifyTags': '修改当前资源的标签（多个项请用逗号分隔）',
+            'inputBox.placeHolder.modifyTags': '如: 核心, 待办, UI',
+            'msg.noValidObject': '未选中有效的资源对象。'
+        }
+    };
+    const lang = vscode.env.language.toLowerCase();
+    const t = (key: string) => {
+        const dict = translations[lang] || translations['en'];
+        return dict[key] || key;
+    };
+
+    // 系统刷新动作：强制从磁盘重载数据并同步 UI
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.refreshEntry', async () => {
+        await tagService.reloadFromFile();
         fileTreeProvider.refresh();
+        tagSummaryProvider.refresh();
     }));
 
-    // 让悬浮区“加号”起效，在上方吊取一个输入框后，切割文字送给控制器
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.addTag', async (node: FileItem) => {
+    // 【核心能力】修改标签：集新增、删除、排序为一体的单点入口
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.modifyTags', async (node: any) => {
+        let targetFsPath = '';
+        if (node instanceof vscode.Uri) {
+            targetFsPath = node.fsPath;
+        } else if (node && node.resourceUri) {
+            targetFsPath = node.resourceUri.fsPath;
+        } else {
+            vscode.window.showInformationMessage(t('msg.noValidObject'));
+            return;
+        }
+
+        const existingTags = tagService.getTagsForFsPath(targetFsPath);
         const input = await vscode.window.showInputBox({ 
-            prompt: '为该系统文件或文件夹追加分配最新定义的自定义 Tag，多个项可以通过逗号将其断开', 
-            placeHolder: '例如撰写格式: 关键模块, 已处理, 待测试' 
+            prompt: t('inputBox.prompt.modifyTags'), 
+            placeHolder: t('inputBox.placeHolder.modifyTags'),
+            value: existingTags.join(', ')
         });
         
-        if (input && input.trim()) {
-            const newTags = input.split(',').map(s => s.trim()).filter(s => s);
-            await tagService.addTag(node.resourceUri.fsPath, newTags);
+        if (input !== undefined) { // 用户没有按取消
+            // 支持中英文逗号、分号及空格分割
+            const newTags = input.split(/[,，;；\s]+/).map(s => s.trim()).filter(s => s);
+            await tagService.setTags(targetFsPath, newTags);
         }
     }));
 
-    // 解除绑定移除命令，通过给用户一个下拉栏确认进行单一移除行为
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.removeTag', async (node: FileItem) => {
-        const existingTags = tagService.getTagsForFsPath(node.resourceUri.fsPath);
-        if (!existingTags || existingTags.length === 0) {
-            vscode.window.showInformationMessage('报告！我们并未在这个文件上找到存在绑定的标记。');
-            return;
-        }
-
-        // 若没多词干脆地扯掉那唯一一块 Tag 则完事
-        if (existingTags.length === 1) {
-            await tagService.removeTag(node.resourceUri.fsPath, existingTags[0]);
-            return;
-        }
-
-        // 如果不止包含一项，让使用者通过点选 QuickPick 选择项精确开除那个名字
-        const selection = await vscode.window.showQuickPick(existingTags, {
-            placeHolder: '列表拥有多个组合绑定定义，请选择决定你要撤销的 Tag 名称'
-        });
-
-        if (selection) {
-            await tagService.removeTag(node.resourceUri.fsPath, selection);
+    // 让自定义树单点击直接跳转到原生资源管理器的当前项
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.revealInNative', async (node: any) => {
+        if (node && node.resourceUri) {
+            await vscode.commands.executeCommand('revealInExplorer', node.resourceUri);
         }
     }));
 
-    // 为真实文件底层处理实现一键“真实现实操刀”——将目标抛进垃圾笼里去
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.deleteItem', async (node: FileItem) => {
-        const confirm = await vscode.window.showWarningMessage(`此行为后果自负，确定需要将 ${node.labelBase} 放纵进系统的垃圾回收站吗？`, { modal: true }, '我明白后果要求确认并移动');
-        if (confirm === '我明白后果要求确认并移动') {
-            await vscode.workspace.fs.delete(node.resourceUri, { recursive: true, useTrash: true });
+    // 从原生资源管理器右键点击，在标签树中定位
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.revealInTagTree', async (uri: vscode.Uri) => {
+        if (uri && uri.scheme === 'file') {
+            const fsPath = uri.fsPath;
+            try {
+                if (rootPath && fsPath.startsWith(rootPath)) {
+                    const stats = await vscode.workspace.fs.stat(uri);
+                    const isDirectory = stats.type === vscode.FileType.Directory;
+                    
+                    const tagList = tagService.getTagsForFsPath(fsPath);
+                    const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
+                    
+                    const item = new FileItem(
+                        uri,
+                        path.basename(fsPath),
+                        isDirectory,
+                        isDirectory ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+                        desc,
+                        isDirectory ? 'folder' : 'file'
+                    );
+                    
+                    await treeView.reveal(item, { select: true, focus: true, expand: true });
+                }
+            } catch (e) {
+                console.error('Manual reveal in Tree failed', e);
+            }
         }
-    }));
-
-    // 用 inputBox 取新名字后调用原名换牌手法接轨到系统重命名 API 去
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.renameItem', async (node: FileItem) => {
-        const newName = await vscode.window.showInputBox({ value: node.labelBase, prompt: '输入该资源意欲重演的新名称' });
-        if (newName && newName !== node.labelBase) {
-            const newUri = vscode.Uri.file(path.join(path.dirname(node.resourceUri.fsPath), newName));
-            await vscode.workspace.fs.rename(node.resourceUri, newUri);
-        }
-    }));
-
-    // 基于传入进来的文件根属或者上一级目录结构为其顺带新拉起一个对接到这儿定位的开发命令台
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.openTerminal', async (node: FileItem) => {
-        const cwd = node.isDirectory ? node.resourceUri.fsPath : path.dirname(node.resourceUri.fsPath);
-        const terminal = vscode.window.createTerminal({ cwd });
-        terminal.show();
     }));
 }
 

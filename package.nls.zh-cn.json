@@ -1,0 +1,13 @@
+{
+    "folder-tagger.displayName": "文件夹标签 (Folder Tagger)",
+    "folder-tagger.description": "支持自定义标签的工作区资源管理器",
+    "views.explorer.tagger-view.name": "资源管理器 (标签树)",
+    "views.explorer.summary-view.name": "标签汇总统计",
+    "commands.refreshEntry": "刷新视图",
+    "commands.modifyTags": "修改标签",
+    "commands.revealInNative": "在资源管理器中显示",
+    "commands.revealInTagTree": "在标签树中显示",
+    "inputBox.prompt.modifyTags": "修改当前资源的标签（可以用逗号、分号或空格分隔）",
+    "inputBox.placeHolder.modifyTags": "如: 核心, 待办; UI 关键",
+    "msg.noValidObject": "未选中有效的资源对象。"
+}

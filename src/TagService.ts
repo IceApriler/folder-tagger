@@ -18,7 +18,8 @@ export class TagService {
     constructor(private workspaceRoot: string | undefined) {
         if (this.workspaceRoot) {
             // 初始化 JSON 映射文件的保存位置：位于工作区根目录的 .vscode 文件夹下
-            this.tagsFilePath = path.join(this.workspaceRoot, '.vscode', 'tags.json');
+            // 更名为更具唯一性的名称，避免与其他扩展冲突
+            this.tagsFilePath = path.join(this.workspaceRoot, '.vscode', 'folder-tagger-tags.json');
         }
     }
 
@@ -77,6 +78,25 @@ export class TagService {
     }
 
     /**
+     * 获取所有带有 Tag 的聚合分类数据结构
+     */
+    public getAllTagsData(): Map<string, string[]> {
+        const tagToFiles = new Map<string, string[]>();
+        if (!this.workspaceRoot) return tagToFiles;
+
+        for (const [key, tags] of this.tagsMap.entries()) {
+            const absolutePath = path.join(this.workspaceRoot, key);
+            for (const tag of tags) {
+                if (!tagToFiles.has(tag)) {
+                    tagToFiles.set(tag, []);
+                }
+                tagToFiles.get(tag)!.push(absolutePath);
+            }
+        }
+        return tagToFiles;
+    }
+
+    /**
      * 追加新的 Tags
      */
     public async addTag(fsPath: string, newTags: string[]): Promise<void> {
@@ -88,6 +108,25 @@ export class TagService {
         const updatedTagsSet = new Set([...existingTags, ...newTags]);
         this.tagsMap.set(key, Array.from(updatedTagsSet));
         
+        this._onDidTagsChange.fire();
+        this.schedulePersist();
+    }
+
+    /**
+     * 直接设置全量 Tags (支持排序和删除)
+     */
+    public async setTags(fsPath: string, tags: string[]): Promise<void> {
+        const key = this.normalize(fsPath);
+        if (!key) return;
+
+        if (tags.length === 0) {
+            this.tagsMap.delete(key);
+        } else {
+            // 保持用户输入的顺序并去重
+            const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
+            this.tagsMap.set(key, uniqueTags);
+        }
+
         this._onDidTagsChange.fire();
         this.schedulePersist();
     }

@@ -1,7 +1,7 @@
 {
   "name": "folder-tagger",
-  "displayName": "Folder Tagger",
-  "description": "Custom Tree Explorer with Tag Support",
+  "displayName": "%folder-tagger.displayName%",
+  "description": "%folder-tagger.description%",
   "version": "1.0.0",
   "engines": {
     "vscode": "^1.80.0"
@@ -12,86 +12,70 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "folder-tagger-explorer",
-          "title": "Folder Tagger",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
     "views": {
-      "folder-tagger-explorer": [
+      "explorer": [
         {
           "id": "folder-tagger-view",
-          "name": "Workspace Explorer",
+          "name": "%views.explorer.tagger-view.name%",
           "icon": "$(list-tree)"
+        },
+        {
+          "id": "folder-tagger-summary-view",
+          "name": "%views.explorer.summary-view.name%",
+          "icon": "$(tag)"
         }
       ]
     },
     "commands": [
       {
         "command": "folder-tagger.refreshEntry",
-        "title": "刷新视图",
+        "title": "%commands.refreshEntry%",
         "icon": "$(refresh)"
       },
       {
-        "command": "folder-tagger.addTag",
-        "title": "Add Tag",
-        "icon": "$(add)"
+        "command": "folder-tagger.modifyTags",
+        "title": "%commands.modifyTags%",
+        "icon": "$(edit)"
       },
       {
-        "command": "folder-tagger.removeTag",
-        "title": "Remove Tag...",
-        "icon": "$(close)"
+        "command": "folder-tagger.revealInNative",
+        "title": "%commands.revealInNative%",
+        "icon": "$(root-folder-opened)"
       },
       {
-        "command": "folder-tagger.deleteItem",
-        "title": "Delete"
-      },
-      {
-        "command": "folder-tagger.renameItem",
-        "title": "Rename"
-      },
-      {
-        "command": "folder-tagger.openTerminal",
-        "title": "Open in Terminal"
+        "command": "folder-tagger.revealInTagTree",
+        "title": "%commands.revealInTagTree%",
+        "icon": "$(list-tree)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "folder-tagger.refreshEntry",
-          "when": "view == folder-tagger-view",
+          "when": "view == folder-tagger-view || view == folder-tagger-summary-view",
           "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "folder-tagger.modifyTags",
+          "group": "2_workspace@1"
+        },
+        {
+          "command": "folder-tagger.revealInTagTree",
+          "group": "2_workspace@2"
         }
       ],
       "view/item/context": [
         {
-          "command": "folder-tagger.addTag",
+          "command": "folder-tagger.modifyTags",
           "when": "view == folder-tagger-view",
           "group": "inline"
         },
         {
-          "command": "folder-tagger.removeTag",
-          "when": "view == folder-tagger-view",
-          "group": "2_workspace@1"
-        },
-        {
-          "command": "folder-tagger.deleteItem",
-          "when": "view == folder-tagger-view",
-          "group": "3_modification@1"
-        },
-        {
-          "command": "folder-tagger.renameItem",
-          "when": "view == folder-tagger-view",
-          "group": "3_modification@2"
-        },
-        {
-          "command": "folder-tagger.openTerminal",
-          "when": "view == folder-tagger-view && viewItem == folder",
-          "group": "5_terminal@1"
+          "command": "folder-tagger.revealInNative",
+          "when": "view == folder-tagger-view || view == folder-tagger-summary-view",
+          "group": "inline"
         }
       ]
     }

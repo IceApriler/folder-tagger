@@ -30,7 +30,7 @@ export class TagSyncManager {
             // 利用 RelativePattern 指针精准锁定底部的那个 tags.json
             const relativePattern = new vscode.RelativePattern(
                 vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.tagService.tagsFilePath)) || vscode.workspace.workspaceFolders![0], 
-                '.vscode/tags.json'
+                '.vscode/folder-tagger-tags.json'
             );
             
             const watcher = vscode.workspace.createFileSystemWatcher(relativePattern);

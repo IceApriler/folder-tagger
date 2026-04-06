@@ -30,6 +30,35 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     }
 
     /**
+     * 实现 getParent 以支持 TreeView.reveal 功能
+     */
+    getParent(element: FileItem): vscode.ProviderResult<FileItem> {
+        const parentPath = path.dirname(element.resourceUri.fsPath);
+        
+        // 如果已经到达工作区根目录或更上级，则没有父节点（在我们的视图中）
+        if (!this.workspaceRoot || parentPath.length < this.workspaceRoot.length || parentPath === this.workspaceRoot) {
+            return undefined;
+        }
+
+        const parentUri = vscode.Uri.file(parentPath);
+        const name = path.basename(parentPath);
+        const isDirectory = true;
+        
+        // 获取父节点的 Tag 信息
+        const tagList = this.tagService.getTagsForFsPath(parentPath);
+        const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
+
+        return new FileItem(
+            parentUri,
+            name,
+            isDirectory,
+            vscode.TreeItemCollapsibleState.Collapsed,
+            desc,
+            'folder'
+        );
+    }
+
+    /**
      * 取到节点子元素。由于我们在元素实例化阶段利用了 None/Collapsed 参数，使得系统唯独会在用户
      * 执行真正的鼠标下层展位点击时，才进入到本方法，从而完成了全宇宙最顺滑的按需懒加载流 (Lazy load)。
      */
@@ -48,6 +77,11 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
             
             // 防御层机制：滤出那些会让运存和 CPU 卡带的构建系统输出大包或是庞杂且不会使用的隐藏包
             entries = entries.filter(([name, type]) => {
+                // 1. 过滤掉 MacOS 系统的垃圾文件
+                if (name === '.DS_Store') {
+                    return false;
+                }
+                // 2. 过滤掉黑名单中的构建与环境文件夹
                 if (type === vscode.FileType.Directory && BLACKLISTED_DIRS.has(name)) {
                     return false;
                 }
@@ -112,6 +146,9 @@ export class FileItem extends vscode.TreeItem {
     ) {
         // 装填原始 URI 以便将之关联为系统挂载
         super(resourceUri, collapsibleState);
+
+        // 设置唯一 ID 以大幅度提升 TreeView.reveal 的性能（VSCode 会根据 ID 快速定位节点）
+        this.id = this.resourceUri.fsPath;
         
         // 我们利用 description 这一特性为 Tag 配置了一个在名称右侧的原生且美观的居留处
         this.tooltip = this.resourceUri.fsPath;
