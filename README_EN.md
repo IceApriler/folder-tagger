@@ -1,5 +1,28 @@
 # Folder Tagger
 
+<p align="center">
+  <img src="media/icon.png" width="128" alt="Logo" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">
+    <img src="https://img.shields.io/github/stars/IceApriler/folder-tagger?style=social" alt="GitHub Stars" />
+  </a>
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">
+    <img src="https://img.shields.io/github/forks/IceApriler/folder-tagger?style=social" alt="GitHub Forks" />
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=IceApriler.folder-tagger" target="_blank">
+    <img src="https://img.shields.io/visual-studio-marketplace/v/IceApriler.folder-tagger" alt="VS Code Marketplace Version" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">GitHub Repository</a> • 
+  <a href="https://marketplace.visualstudio.com/items?itemName=IceApriler.folder-tagger" target="_blank">VS Code Marketplace</a>
+</p>
+
+> ⭐ If you find this extension helpful, please give us a Star! 
+
 **Folder Tagger** is a high-performance file and folder tagging extension designed for VS Code, helping developers quickly organize and locate resources in complex projects. Through an intuitive visual interface and powerful tag management capabilities, it significantly enhances navigation efficiency and code organization experience for large-scale projects.
 
 ## 🚀 Core Features

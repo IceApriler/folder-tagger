@@ -1,8 +1,27 @@
 # Folder Tagger (文件夹标签)
 
 <p align="center">
-  <img src="media/icon.png" width="128" alt="Logo" />
+  <img src="https://cdn.jsdelivr.net/gh/IceApriler/folder-tagger@master/media/icon.png" width="128" alt="Logo" />
 </p>
+
+<p align="center">
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">
+    <img src="https://img.shields.io/github/stars/IceApriler/folder-tagger?style=social" alt="GitHub Stars" />
+  </a>
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">
+    <img src="https://img.shields.io/github/forks/IceApriler/folder-tagger?style=social" alt="GitHub Forks" />
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=IceApriler.folder-tagger" target="_blank">
+    <img src="https://img.shields.io/visual-studio-marketplace/v/IceApriler.folder-tagger" alt="VS Code Marketplace Version" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/IceApriler/folder-tagger" target="_blank">GitHub 仓库</a> • 
+  <a href="https://marketplace.visualstudio.com/items?itemName=IceApriler.folder-tagger" target="_blank">VS Code 市场</a>
+</p>
+
+> ⭐ 如果觉得这个扩展对你有帮助，请给我们一个 Star 支持！
 
 **Folder Tagger** 是一款专为 VS Code 设计的高性能文件与文件夹标签管理扩展，旨在帮助开发者在复杂项目中快速组织和定位资源。通过直观的可视化界面和强大的标签管理功能，显著提升大型项目的导航效率和代码组织体验。
 
@@ -10,7 +29,7 @@
 
 ### 1. 双视图管理系统
 
-<img src="media/screenshots/dual-view.png" width="600" alt="Dual View Management" />
+<img src="https://cdn.jsdelivr.net/gh/IceApriler/folder-tagger@master/media/screenshots/dual-view.png" width="600" alt="Dual View Management" />
 
 - **标签树视图**：以树状结构展示工作区文件，实时同步标签显示，支持过滤未标记项，专注于关键资源。
 - **标签汇总视图**：按标签名称聚合资源，点击标签可展开并跳转至对应文件，便于跨模块快速切换。

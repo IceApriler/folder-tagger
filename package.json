@@ -6,7 +6,8 @@
   "version": "1.0.0",
   "icon": "media/icon.png",
   "categories": [
-    "Other"
+    "Productivity",
+    "File Management"
   ],
   "keywords": [
     "vscode",
