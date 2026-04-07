@@ -109,28 +109,29 @@ export async function activate(context: vscode.ExtensionContext) {
             }
 
             // 2. 同步到 Workspace Explorer (Tags) 面板
-            // 注意：我们移除 .visible 检查，让 reveal 更激进地预加载路径
-            try {
-                if (rootPath && fsPath.startsWith(rootPath)) {
-                    const tagList = tagService.getTagsForFsPath(fsPath);
-                    const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
-                    
-                    const fileItem = new FileItem(
-                        editor.document.uri,
-                        path.basename(fsPath),
-                        false, // isDirectory
-                        vscode.TreeItemCollapsibleState.None,
-                        desc,
-                        'file'
-                    );
-                    
-                    // reveal 会根据 getParent 自动展开层级定位
-                    // 即使 view 不可见，reveal 也有助于 VSCode 建立节点缓存
-                    await treeView.reveal(fileItem, { select: true, focus: false, expand: true });
-                    console.log(`[FolderTagger] Reveal triggered for: ${path.basename(fsPath)}`);
+            // 修复：仅在视图可见时执行 reveal，避免从 SCM 等其他面板强制切换侧边栏
+            if (treeView.visible) {
+                try {
+                    if (rootPath && fsPath.startsWith(rootPath)) {
+                        const tagList = tagService.getTagsForFsPath(fsPath);
+                        const desc = tagList && tagList.length > 0 ? `[${tagList.join(', ')}]` : '';
+                        
+                        const fileItem = new FileItem(
+                            editor.document.uri,
+                            path.basename(fsPath),
+                            false, // isDirectory
+                            vscode.TreeItemCollapsibleState.None,
+                            desc,
+                            'file'
+                        );
+                        
+                        // reveal 会根据 getParent 自动展开层级定位
+                        await treeView.reveal(fileItem, { select: true, focus: false, expand: true });
+                        console.log(`[FolderTagger] Reveal triggered for: ${path.basename(fsPath)}`);
+                    }
+                } catch (e) {
+                    console.error('Auto-reveal in Tree failed', e);
                 }
-            } catch (e) {
-                console.error('Auto-reveal in Tree failed', e);
             }
         }, 100);
     };

@@ -3,7 +3,7 @@
   "publisher": "IceApriler",
   "displayName": "Folder Tagger (文件夹标签)",
   "description": "为文件和文件夹添加自定义标签，极大地提升大型项目的导航效率。",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "icon": "media/icon.png",
   "categories": [
     "Other"
