@@ -63,18 +63,27 @@ export async function activate(context: vscode.ExtensionContext) {
     // ============================================
     // 5. 状态管理与显示设置
     // ============================================
-    // 初始化配置状态：从 workspaceState (持久化) 中读取
-    let isHideUntagged = context.workspaceState.get<boolean>('hideUntagged', false);
+    // 初始化配置状态：优先从配置中读取，兼容旧的工作区状态
+    let isHideUntagged = vscode.workspace.getConfiguration('folderTagger').get<boolean>('hideUntagged', false);
 
     // 同步初始状态给 Provider
     fileTreeProvider.isHideUntagged = isHideUntagged;
 
     // 同步 Context Key 以支持 package.json 中的菜单图标条件切换
     const updateContextKeys = () => {
-        console.log(`[FolderTagger] Updating context: hideUntagged = ${isHideUntagged}`);
+        isHideUntagged = vscode.workspace.getConfiguration('folderTagger').get<boolean>('hideUntagged', false);
+        fileTreeProvider.isHideUntagged = isHideUntagged;
         vscode.commands.executeCommand('setContext', 'folderTagger.hideUntagged', isHideUntagged);
     };
     updateContextKeys();
+
+    // 监听配置变更，同步逻辑状态
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('folderTagger.hideUntagged')) {
+            updateContextKeys();
+            fileTreeProvider.refresh();
+        }
+    }));
     
     // 辅助函数：统一处理同步定位逻辑
     const syncActiveEditor = (editor: vscode.TextEditor | undefined, source: string = 'unknown') => {
@@ -192,24 +201,28 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
 
     // 指令 A：隐藏未标记项
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.hideUntagged', () => {
-        isHideUntagged = true;
-        context.workspaceState.update('hideUntagged', true);
-        fileTreeProvider.isHideUntagged = true;
-        fileTreeProvider.refresh();
-        updateContextKeys();
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.hideUntagged', async () => {
+        const config = vscode.workspace.getConfiguration('folderTagger');
+        await config.update('hideUntagged', true, vscode.ConfigurationTarget.Workspace);
+        // 配置更新后，onDidChangeConfiguration 会触发 UI 刷新
     }));
 
     // 指令 B：显示所有项
-    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.showUntagged', () => {
-        isHideUntagged = false;
-        context.workspaceState.update('hideUntagged', false);
-        fileTreeProvider.isHideUntagged = false;
-        fileTreeProvider.refresh();
-        updateContextKeys();
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.showUntagged', async () => {
+        const config = vscode.workspace.getConfiguration('folderTagger');
+        await config.update('hideUntagged', false, vscode.ConfigurationTarget.Workspace);
+        // 配置更新后，onDidChangeConfiguration 会触发 UI 刷新
+    }));
+    
+    // 指令 C：切换文件名高亮
+    context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.toggleHighlight', async () => {
+        const config = vscode.workspace.getConfiguration('folderTagger');
+        const current = config.get<boolean>('enableFileNameHighlight', false);
+        await config.update('enableFileNameHighlight', !current, vscode.ConfigurationTarget.Global);
+        // TagDecorationProvider 会通过 onDidChangeConfiguration 自动监听到并刷新
     }));
 
-    // 【核心能力】修改标签：集新增、删除、排序为一体的单点入口
+    // 【核心能力】修改标签
     context.subscriptions.push(vscode.commands.registerCommand('folder-tagger.modifyTags', async (node: any) => {
         let targetFsPath = '';
         if (node instanceof vscode.Uri) {

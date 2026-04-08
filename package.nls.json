@@ -9,7 +9,11 @@
     "commands.revealInTagTree": "Reveal in Tag Tree",
     "commands.hideUntagged": "Hide Untagged Items",
     "commands.showUntagged": "Show Untagged Items",
+    "commands.toggleHighlight": "Toggle Filename Highlight",
     "inputBox.prompt.modifyTags": "Edit tags for this resource (separate with commas, semicolons or spaces)",
     "inputBox.placeHolder.modifyTags": "e.g. Core, Feature; UI Legacy",
-    "msg.noValidObject": "No valid file or folder selected."
+    "msg.noValidObject": "No valid file or folder selected.",
+    "config.tagColor.description": "The color of the tag highlight and badge (e.g., charts.blue, charts.red).",
+    "config.enableFileNameHighlight.description": "Whether to color the entire file/folder name. If false, only the badge will be colored.",
+    "config.hideUntagged.description": "Whether to hide items that do not have any tags."
 }

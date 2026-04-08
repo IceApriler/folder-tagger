@@ -9,7 +9,11 @@
     "commands.revealInTagTree": "在标签树中显示",
     "commands.hideUntagged": "隐藏未标记项",
     "commands.showUntagged": "显示所有项",
+    "commands.toggleHighlight": "切换文件名高亮",
     "inputBox.prompt.modifyTags": "修改当前资源的标签（可以用逗号、分号或空格分隔）",
     "inputBox.placeHolder.modifyTags": "如: 核心, 待办; UI 关键",
-    "msg.noValidObject": "未选中有效的资源对象。"
+    "msg.noValidObject": "未选中有效的资源对象。",
+    "config.tagColor.description": "标签高亮和徽标的颜色（如 charts.blue, charts.red）。",
+    "config.enableFileNameHighlight.description": "是否对整个文件/文件夹名称进行上色。如果为否，则仅对徽标上色。",
+    "config.hideUntagged.description": "是否隐藏未添加任何标签的项目。"
 }

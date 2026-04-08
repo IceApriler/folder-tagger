@@ -9,6 +9,16 @@ export class TagDecorationProvider implements vscode.FileDecorationProvider {
     public showBadgeCount: boolean = false;
 
     constructor(private tagService: TagService, private context: vscode.ExtensionContext) {
+        // 监听配置更改，以便实时刷新装饰
+        this.context.subscriptions.push(
+            vscode.workspace.onDidChangeConfiguration(e => {
+                if (e.affectsConfiguration('folderTagger.tagColor') || 
+                    e.affectsConfiguration('folderTagger.enableFileNameHighlight')) {
+                    this.refresh();
+                }
+            })
+        );
+
         // 监听来自后台字典的更新号角
         this.context.subscriptions.push(
             this.tagService.onDidTagsChange(() => {
@@ -31,10 +41,16 @@ export class TagDecorationProvider implements vscode.FileDecorationProvider {
         
         // 当查询到此实体资源确实包含被赋予的 Tag 集合后，开启特效
         if (tags && tags.length > 0) {
+            const config = vscode.workspace.getConfiguration('folderTagger');
+            const tagColor = config.get<string>('tagColor', 'charts.blue');
+            const enableFileNameHighlight = config.get<boolean>('enableFileNameHighlight', false);
+
             return {
                 badge: 'T', // 固定显示经典的“T”微标
-                color: new vscode.ThemeColor('charts.blue'), // 改写它在树图界面中的排版字体为深邃蓝
-                tooltip: `已挂载的 ${tags.length} 个 Tag: ${tags.join(', ')}` // 当鼠标经过时悬浮呈现的详情文本
+                // VSCode API 限制：color 会同时作用于文字和 Badge。
+                // 如果用户希望文件名不亮，我们只能不传 color。
+                color: enableFileNameHighlight ? new vscode.ThemeColor(tagColor) : undefined,
+                tooltip: `已挂载的 ${tags.length} 个 Tag: ${tags.join(', ')}`,
             };
         }
         return undefined; // 不是我们的菜，原物返回即可

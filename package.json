@@ -3,7 +3,7 @@
   "publisher": "IceApriler",
   "displayName": "Folder Tagger (文件夹标签)",
   "description": "为文件和文件夹添加自定义标签，极大地提升大型项目的导航效率。",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "icon": "media/icon.png",
   "categories": [
     "Other"
@@ -80,6 +80,11 @@
         "command": "folder-tagger.showUntagged",
         "title": "%commands.showUntagged%",
         "icon": "$(eye-closed)"
+      },
+      {
+        "command": "folder-tagger.toggleHighlight",
+        "title": "%commands.toggleHighlight%",
+        "icon": "$(paintcan)"
       }
     ],
     "menus": {
@@ -100,6 +105,11 @@
           "when": "view == folder-tagger-view && folderTagger.hideUntagged",
           "group": "navigation@2",
           "icon": "$(eye-closed)"
+        },
+        {
+          "command": "folder-tagger.toggleHighlight",
+          "when": "view == folder-tagger-view || view == folder-tagger-summary-view",
+          "group": "navigation@3"
         }
       ],
       "explorer/context": [
@@ -124,6 +134,46 @@
           "group": "inline"
         }
       ]
+    },
+    "configuration": {
+      "title": "Folder Tagger",
+      "properties": {
+        "folderTagger.tagColor": {
+          "type": "string",
+          "default": "charts.blue",
+          "description": "%config.tagColor.description%",
+          "enum": [
+            "charts.blue",
+            "charts.red",
+            "charts.green",
+            "charts.yellow",
+            "charts.orange",
+            "charts.purple",
+            "charts.foreground",
+            "charts.lines"
+          ],
+          "enumDescriptions": [
+            "Blue",
+            "Red",
+            "Green",
+            "Yellow",
+            "Orange",
+            "Purple",
+            "Foreground",
+            "Lines"
+          ]
+        },
+        "folderTagger.enableFileNameHighlight": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.enableFileNameHighlight.description%"
+        },
+        "folderTagger.hideUntagged": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.hideUntagged.description%"
+        }
+      }
     }
   },
   "scripts": {
